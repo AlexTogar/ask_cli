@@ -1,0 +1,20 @@
+{
+  "name": "ask_cli",
+  "version": "1.0.0",
+  "main": "ask.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "bin": {
+    "ask": "./ask.js"
+  },
+  "type": "module",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-fetch": "^3.3.2"
+  }
+}
