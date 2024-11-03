@@ -5,24 +5,22 @@ import fetch from 'node-fetch'; // You need to install node-fetch if you don't h
 dotenv.config({ path: './config.env' });
 
 const TOKEN = process.env.TOKEN;
-const SERVER_IP = '192.168.0.189';
+const DEFAULT_SERVER_IP = process.env.SERVER_IP;
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL;
 
-async function ask(question) {
-  const url = `http://${SERVER_IP}:8080/api/chat/completions`;
+const ask = async (question) => {
+  const url = `http://${DEFAULT_SERVER_IP}:8080/api/chat/completions`;
   const headers = {
     Authorization: `Bearer ${TOKEN}`,
     'Content-Type': 'application/json',
   };
-
-  const model = process.env.argv[3] || DEFAULT_MODEL;
 
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        model,
+        model: DEFAULT_MODEL,
         messages: [
           {
             role: 'user',
@@ -40,7 +38,7 @@ async function ask(question) {
     console.error('Error:', error);
     process.exit(1);
   }
-}
+};
 
 // Check if the script is run directly and get the argument passed in.
 const question = process.argv[2];
