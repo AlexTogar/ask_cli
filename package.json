@@ -10,11 +10,11 @@
   "bin": {
     "ask": "./ask.js"
   },
-  "type": "module",
+  "type": "commonjs",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "dotenv": "^16.4.5",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^2.7.0"
   }
 }

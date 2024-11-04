@@ -1,52 +1,83 @@
 #!/usr/bin/env node
-import dotenv from 'dotenv';
-import fetch from 'node-fetch'; // You need to install node-fetch if you don't have it yet: npm install node-fetch
 
-dotenv.config({ path: './config.env' });
+const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
 
-const TOKEN = process.env.TOKEN;
-const DEFAULT_SERVER_IP = process.env.SERVER_IP;
-const DEFAULT_MODEL = process.env.DEFAULT_MODEL;
+function readJsonFile(filePath) {
+  return JSON.parse(fs.readFileSync(path.resolve(__dirname, filePath), 'utf8'));
+}
 
-const ask = async (question) => {
-  const url = `http://${DEFAULT_SERVER_IP}:8080/api/chat/completions`;
-  const headers = {
-    Authorization: `Bearer ${TOKEN}`,
-    'Content-Type': 'application/json',
-  };
+function writeJsonFile(filePath, data) {
+  const jsonData = JSON.stringify(data, null, 2);
+  fs.writeFileSync(path.resolve(__dirname, filePath), jsonData, 'utf8');
+}
+
+const config = readJsonFile('./config.json');
+
+async function ask({ question, flags }) {
+  if (flags.c) {
+    writeJsonFile('./context.json', {});
+  }
+
+  if (!question) return;
+
+  const context = readJsonFile('./context.json');
+  const messages = [
+    ...(context.messages || []),
+    { role: 'user', content: question },
+  ];
+  writeJsonFile('./context.json', { messages });
 
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: question,
-          },
-        ],
-      }),
-    });
+    const response = await fetch(
+      `http://${config.serverIp}:8080/api/chat/completions`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${config.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: config.defaultModel,
+          messages,
+        }),
+      }
+    );
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    const assistantMessage = {
+      role: 'assistant',
+      content: data.choices[0].message.content,
+    };
+
+    writeJsonFile('./context.json', {
+      messages: [...messages, assistantMessage],
+    });
+    return assistantMessage.content;
   } catch (error) {
     console.error('Error:', error);
     process.exit(1);
   }
-};
-
-// Check if the script is run directly and get the argument passed in.
-const question = process.argv[2];
-if (!question) {
-  console.error('Please provide a question.');
-  process.exit(1);
 }
 
-ask(question).then((response) => {
-  console.log(response);
+const args = process.argv.slice(2);
+const input = {
+  question: '',
+  flags: { c: false },
+};
+
+args.forEach((arg) => {
+  if (!arg.startsWith('--')) {
+    input.question = arg;
+  } else {
+    const flagKey = arg.replace('--', '');
+    if (flagKey in input.flags) {
+      input.flags[flagKey] = true;
+    }
+  }
 });
+
+ask(input).then((response) => console.log(response));
