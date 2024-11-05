@@ -1,33 +1,28 @@
 #!/usr/bin/env node
-
 const fetch = require('node-fetch');
-const fs = require('fs');
-const path = require('path');
 
-function readJsonFile(filePath) {
-  return JSON.parse(fs.readFileSync(path.resolve(__dirname, filePath), 'utf8'));
-}
-
-function writeJsonFile(filePath, data) {
-  const jsonData = JSON.stringify(data, null, 2);
-  fs.writeFileSync(path.resolve(__dirname, filePath), jsonData, 'utf8');
-}
+const helpers = require('./helpers.js');
+const {
+  readJsonFile,
+  pushMessage,
+  clearMessages,
+  createUserMessage,
+  createAiMessage,
+  readContext,
+  writeContext,
+} = helpers;
 
 const config = readJsonFile('./config.json');
 
-async function ask({ question, flags }) {
+const ask = async ({ question, flags }) => {
   if (flags.c) {
-    writeJsonFile('./context.json', {});
+    clearMessages();
   }
 
   if (!question) return;
 
-  const context = readJsonFile('./context.json');
-  const messages = [
-    ...(context.messages || []),
-    { role: 'user', content: question },
-  ];
-  writeJsonFile('./context.json', { messages });
+  const userMessage = createUserMessage(question);
+  pushMessage(userMessage);
 
   try {
     const response = await fetch(
@@ -40,7 +35,7 @@ async function ask({ question, flags }) {
         },
         body: JSON.stringify({
           model: config.defaultModel,
-          messages,
+          messages: readContext().messages,
         }),
       }
     );
@@ -48,20 +43,16 @@ async function ask({ question, flags }) {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const data = await response.json();
-    const assistantMessage = {
-      role: 'assistant',
-      content: data.choices[0].message.content,
-    };
+    const answer = data.choices[0].message.content;
+    pushMessage(createAiMessage(answer));
+    writeContext((context) => ({ ...context, lastAnswerTs: Date.now() }));
 
-    writeJsonFile('./context.json', {
-      messages: [...messages, assistantMessage],
-    });
-    return assistantMessage.content;
+    return answer;
   } catch (error) {
     console.error('Error:', error);
     process.exit(1);
   }
-}
+};
 
 const args = process.argv.slice(2);
 const input = {
@@ -73,9 +64,9 @@ args.forEach((arg) => {
   if (!arg.startsWith('--')) {
     input.question = arg;
   } else {
-    const flagKey = arg.replace('--', '');
-    if (flagKey in input.flags) {
-      input.flags[flagKey] = true;
+    const key = arg.replace('--', '');
+    if (key in input.flags) {
+      input.flags[key] = true;
     }
   }
 });
