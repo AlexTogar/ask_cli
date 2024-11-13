@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const fetch = require('node-fetch');
-
 const helpers = require('./helpers.js');
 const {
   readJsonFile,
@@ -57,7 +56,7 @@ const ask = async ({ question, flags }) => {
 const args = process.argv.slice(2);
 const input = {
   question: '',
-  flags: { c: false },
+  flags: { c: false, q: false },
 };
 
 args.forEach((arg) => {

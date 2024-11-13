@@ -9,7 +9,8 @@
   "keywords": [],
   "author": "",
   "bin": {
-    "ask": "./ask.js"
+    "ask": "./ask.js",
+    "asks": "./script.sh"
   },
   "type": "commonjs",
   "license": "ISC",
