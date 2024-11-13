@@ -39,6 +39,17 @@ const createAiMessage = (message) => ({
   content: message,
 });
 
+const checkMessagesAfterTimeout = () => {
+  const { lastAnswerTs } = readContext();
+  const currentTime = Date.now();
+  const diffSeconds = (currentTime - lastAnswerTs) / 1000;
+  const diffMinutes = diffSeconds / 60;
+
+  if (diffMinutes > 5) {
+    clearMessages();
+  }
+};
+
 module.exports = {
   readJsonFile,
   writeJsonFile,
@@ -48,4 +59,5 @@ module.exports = {
   clearMessages,
   createUserMessage,
   createAiMessage,
+  checkMessagesAfterTimeout,
 };

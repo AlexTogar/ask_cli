@@ -9,11 +9,14 @@ const {
   createAiMessage,
   readContext,
   writeContext,
+  checkMessagesAfterTimeout,
 } = helpers;
 
 const config = readJsonFile('./config.json');
 
 const ask = async ({ question, flags }) => {
+  checkMessagesAfterTimeout();
+
   if (flags.c) {
     clearMessages();
   }
@@ -56,7 +59,7 @@ const ask = async ({ question, flags }) => {
 const args = process.argv.slice(2);
 const input = {
   question: '',
-  flags: { c: false, q: false },
+  flags: { c: false },
 };
 
 args.forEach((arg) => {
