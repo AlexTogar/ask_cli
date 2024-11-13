@@ -14,6 +14,7 @@ const {
 
 const config = readJsonFile('./config.json');
 
+// This function sends a question to the AI chat API and handles the response
 const ask = async ({ question, flags }) => {
   checkMessagesAfterTimeout();
 
@@ -64,6 +65,7 @@ const input = {
 
 args.forEach((arg) => {
   if (!arg.startsWith('--')) {
+    // Set the question from the first non-flag argument
     input.question = arg;
   } else {
     const key = arg.replace('--', '');
