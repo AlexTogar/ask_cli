@@ -52,7 +52,6 @@ const checkMessagesAfterTimeout = () => {
 
 // Function to check the reachability of an endpoint
 const isEndpointReachable = async (endpoint) => {
-  console.log('check ' + JSON.stringify(endpoint));
   try {
     const response = await fetch(
       `http://${endpoint.serverIp}:${endpoint.port}`,
