@@ -50,6 +50,20 @@ const checkMessagesAfterTimeout = () => {
   }
 };
 
+// Function to check the reachability of an endpoint
+const isEndpointReachable = async (endpoint) => {
+  console.log('check ' + JSON.stringify(endpoint));
+  try {
+    const response = await fetch(
+      `http://${endpoint.serverIp}:${endpoint.port}`,
+      { method: 'HEAD', timeout: 5000 }
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
 module.exports = {
   readJsonFile,
   writeJsonFile,
@@ -60,4 +74,5 @@ module.exports = {
   createUserMessage,
   createAiMessage,
   checkMessagesAfterTimeout,
+  isEndpointReachable,
 };

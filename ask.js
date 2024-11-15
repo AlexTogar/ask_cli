@@ -10,6 +10,7 @@ const {
   readContext,
   writeContext,
   checkMessagesAfterTimeout,
+  isEndpointReachable,
 } = helpers;
 
 const config = readJsonFile('./config.json');
@@ -28,22 +29,31 @@ const ask = async ({ question, flags }) => {
   pushMessage(userMessage);
 
   try {
-    const response = await fetch(
-      `http://${config.serverIp}:8080/api/chat/completions`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${config.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: config.defaultModel,
-          messages: readContext().messages,
-        }),
+    let response;
+    for (let endpoint of config.endpoints) {
+      if (!(await isEndpointReachable(endpoint))) {
+        continue;
       }
-    );
 
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      response = await fetch(
+        `http://${endpoint.serverIp}:${endpoint.port}/api/chat/completions`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${endpoint.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: endpoint.defaultModel,
+            messages: readContext().messages,
+          }),
+        }
+      );
+
+      if (response.ok) break;
+    }
+
+    if (!response?.ok) throw new Error(`No reachable endpoint`);
 
     const data = await response.json();
     const answer = data.choices[0].message.content;

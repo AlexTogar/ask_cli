@@ -7,7 +7,18 @@ if (!fs.existsSync(`context.json`))
 
 if (!fs.existsSync(`config.json`))
   writeJsonFile(`config.json`, {
-    token: 'YOUR_TOKEN',
-    defaultModel: 'YOUR_MODEL',
-    serverIp: 'YOUR_IP',
+    endpoints: [
+      {
+        token: 'YOUR_TOKEN',
+        defaultModel: 'qwen2.5-coder',
+        serverIp: '192.168.0.187',
+        port: '8080',
+      },
+      {
+        token: 'YOUR_TOKEN',
+        defaultModel: 'qwen2.5-coder',
+        serverIp: '192.168.0.189',
+        port: '8080',
+      },
+    ],
   });
