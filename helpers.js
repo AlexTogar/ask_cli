@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+// ===== File Operations =====
 const readJsonFile = (filePath) => {
   return JSON.parse(fs.readFileSync(path.resolve(__dirname, filePath), 'utf8'));
 };
@@ -10,6 +11,7 @@ const writeJsonFile = (filePath, data) => {
   fs.writeFileSync(path.resolve(__dirname, filePath), jsonData, 'utf8');
 };
 
+// ===== Context Management =====
 const readContext = () => readJsonFile('./context.json');
 
 const writeContext = (callback) => {
@@ -50,7 +52,7 @@ const checkMessagesAfterTimeout = () => {
   }
 };
 
-// Function to check the reachability of an endpoint
+// ===== Endpoint Management =====
 const isEndpointReachable = async (endpoint) => {
   try {
     const response = await fetch(
@@ -63,9 +65,87 @@ const isEndpointReachable = async (endpoint) => {
   }
 };
 
+const sortEndpointsByPriority = (endpoints) =>
+  endpoints.sort((a, b) => {
+    a.priority > b.priority ? 1 : 0;
+  });
+
+const getResponseFromEndpoints = async (endpoints) => {
+  const sortedEndpoints = sortEndpointsByPriority(endpoints);
+  for (let endpoint of sortedEndpoints) {
+    if (!(await isEndpointReachable(endpoint))) {
+      continue;
+    }
+
+    const response = await fetchEndpoint(endpoint);
+    if (response.ok) return response;
+  }
+  return null;
+};
+
+const fetchEndpoint = async (endpoint) => {
+  return await fetch(
+    `http://${endpoint.serverIp}:${endpoint.port}/api/chat/completions`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${endpoint.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: endpoint.defaultModel,
+        messages: readContext().messages,
+      }),
+    }
+  );
+};
+
+const processResponse = async (response) => {
+  const data = await response.json();
+  const answer = data.choices[0].message.content;
+  return answer;
+};
+
+// ===== Command Line Argument Parsing =====
+const parseCommandLineArgs = () => {
+  const args = process.argv.slice(2);
+  const input = {
+    question: '',
+    flags: { c: false },
+  };
+
+  // Process command line arguments
+  args.forEach((arg) => {
+    const isFlag = arg.startsWith('--');
+
+    if (!isFlag) {
+      // Set the question from the first non-flag argument
+      input.question = arg;
+      return;
+    }
+
+    // Handle flag arguments
+    const flagName = arg.replace('--', '');
+    if (flagName in input.flags) {
+      input.flags[flagName] = true;
+    }
+  });
+
+  return input;
+};
+
+// ===== Error Handling =====
+const handleError = (error) => {
+  console.error('Error:', error);
+  process.exit(1);
+};
+
 module.exports = {
+  // File Operations
   readJsonFile,
   writeJsonFile,
+
+  // Context Management
   readContext,
   writeContext,
   pushMessage,
@@ -73,5 +153,16 @@ module.exports = {
   createUserMessage,
   createAiMessage,
   checkMessagesAfterTimeout,
+
+  // Endpoint Management
   isEndpointReachable,
+  sortEndpointsByPriority,
+  getResponseFromEndpoints,
+  processResponse,
+
+  // Command Line Argument Parsing
+  parseCommandLineArgs,
+
+  // Error Handling
+  handleError,
 };

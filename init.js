@@ -2,23 +2,33 @@ const { writeJsonFile } = require('./helpers.js');
 const fs = require('fs');
 const path = require('path');
 
-if (!fs.existsSync(`context.json`))
-  writeJsonFile(`context.json`, { messages: [] });
+// Create context.json if it doesn't exist
+if (!fs.existsSync('context.json')) {
+  writeJsonFile('context.json', {
+    messages: [],
+  });
+}
 
-if (!fs.existsSync(`config.json`))
-  writeJsonFile(`config.json`, {
+// Create config.json with default endpoints if it doesn't exist
+if (!fs.existsSync('config.json')) {
+  const defaultConfig = {
     endpoints: [
       {
         token: 'YOUR_TOKEN',
         defaultModel: 'qwen2.5-coder',
         serverIp: '192.168.0.187',
         port: '8080',
+        priority: 1,
       },
       {
         token: 'YOUR_TOKEN',
         defaultModel: 'qwen2.5-coder',
         serverIp: '192.168.0.189',
         port: '8080',
+        priority: 2,
       },
     ],
-  });
+  };
+
+  writeJsonFile('config.json', defaultConfig);
+}
