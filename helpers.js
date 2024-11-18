@@ -111,7 +111,7 @@ const parseCommandLineArgs = () => {
   const args = process.argv.slice(2);
   const input = {
     question: '',
-    flags: { c: false },
+    flags: { c: false, model: '' },
   };
 
   // Process command line arguments
@@ -126,8 +126,12 @@ const parseCommandLineArgs = () => {
 
     // Handle flag arguments
     const flagName = arg.replace('--', '');
-    if (flagName in input.flags) {
+    if (flagName in input.flags && typeof input.flags[flagName] === 'boolean') {
       input.flags[flagName] = true;
+    } else if (flagName in input.flags) {
+      // Set the value of the string flag from the next argument
+      const valueIndex = args.indexOf(arg) + 1;
+      input.flags[flagName] = args[valueIndex];
     }
   });
 
